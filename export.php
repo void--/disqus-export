@@ -14,7 +14,7 @@ $data = getThreadsRecursive($threads_endpoint, $data, null);
 // Grab post data for threads with posts.
 foreach ($data as &$thread) {
   if ($thread->posts > 0) {
-    $thread->post_data = getPostsForThread($thread->id);
+    $thread->post_data = getPostsForThread($thread->id, $config);
   }
 }
 
