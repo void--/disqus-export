@@ -27,9 +27,6 @@ if ($config->exclude_empty_threads) {
 
 // Export data to desired format.
 switch ($config->export_format) {
-  case 'csv_file':
-    exportToCsv($data);
-    break;
   case 'json_file':
     exportToJson($data);
     break;
@@ -75,16 +72,6 @@ function curlGet($endpoint) {
   curl_close($session);
 
   return json_decode($result);
-}
-
-// Export to csv file.
-function exportToCsv($data) {
-  $fp = fopen('disqus_data.csv', 'w');
-  fputcsv($fp, array_keys((array) $data['0']));
-  foreach($data as $values){
-      fputcsv($fp, (array) $values);
-  }
-  fclose($fp);
 }
 
 // Export to json file.
