@@ -56,9 +56,15 @@ function getThreadsRecursive($endpoint, $data, $cursor) {
 
 // Get all posts for a specified thread id.
 function getPostsForThread($thread_id, $config) {
-  $posts_endpoint = 'https://disqus.com/api/3.0/threads/listPosts.json?api_key=' . $config->api_key . '&forum=' . $config->forum . '&thread=' . $thread_id;
+  $posts_endpoint = 'https://disqus.com/api/3.0/threads/listPosts.json?api_key=' . $config->api_key . '&forum=' . $config->forum . '&thread=' . $thread_id . '&limit=100';
 
-  return curlGet($posts_endpoint);
+  $result = curlGet($posts_endpoint);
+
+  if ($result->cursor->more) {
+    throw new Exception("More than 100 comments on thread {$thread_id}. This is currently not supported :/ pull requests welcome.");
+  }
+
+  return $result->response;
 }
 
 // Perform a 'get' operation with curl.
