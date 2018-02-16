@@ -8,15 +8,35 @@ $threads_endpoint = 'https://disqus.com/api/3.0/threads/list?api_key=' . $config
 
 $data = [];
 
+// Grab all the threads.
 $data = getThreadsRecursive($threads_endpoint, $data, null);
 
+// Grab post data for threads with posts.
+foreach ($data as &$thread) {
+  if ($thread->posts > 0) {
+    $thread->post_data = getPostsForThread($thread->id);
+  }
+}
+
+// Filter out empty threads (if desired).
 if ($config->exclude_empty_threads) {
   $data = array_filter($data, function($d) {
     return $d->posts > 0;
   });
 }
 
-exportToCsv($data);
+// Export data to desired format.
+switch ($config->export_format) {
+  case 'csv_file':
+    exportToCsv($data);
+    break;
+  case 'json_file':
+    exportToJson($data);
+    break;
+  default:
+    echo json_encode($data);
+    break;
+}
 
 // Recursively get all threads for a specified forum.
 function getThreadsRecursive($endpoint, $data, $cursor) {
@@ -34,14 +54,14 @@ function getThreadsRecursive($endpoint, $data, $cursor) {
   return $data;
 }
 
-// Get all posts for a specified thread id
+// Get all posts for a specified thread id.
 function getPostsForThread($thread_id, $config) {
   $posts_endpoint = 'https://disqus.com/api/3.0/threads/listPosts.json?api_key=' . $config->api_key . '&forum=' . $config->forum . '&thread=' . $thread_id;
 
   return curlGet($posts_endpoint);
 }
 
-// Perform a 'get' operation with curl
+// Perform a 'get' operation with curl.
 function curlGet($endpoint) {
   $session = curl_init($endpoint);
   curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
@@ -51,7 +71,7 @@ function curlGet($endpoint) {
   return json_decode($result);
 }
 
-// Export as csv
+// Export to csv file.
 function exportToCsv($data) {
   $fp = fopen('disqus_data.csv', 'w');
   fputcsv($fp, array_keys((array) $data['0']));
@@ -59,4 +79,9 @@ function exportToCsv($data) {
       fputcsv($fp, (array) $values);
   }
   fclose($fp);
+}
+
+// Export to json file.
+function exportToJson($data) {
+  file_put_contents('disqus_data.json', json_encode($data));
 }
