@@ -2,5 +2,6 @@
   "forum": "",
   "api_key": "",
   "export_format": "",
-  "exclude_empty_threads": true
+  "exclude_empty_threads": true,
+  "flatten": true
 }

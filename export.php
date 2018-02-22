@@ -11,18 +11,47 @@ $data = [];
 // Grab all the threads.
 $data = getThreadsRecursive($threads_endpoint, $data, null);
 
-// Grab post data for threads with posts.
-foreach ($data as &$thread) {
-  if ($thread->posts > 0) {
-    $thread->post_data = getPostsForThread($thread->id, $config);
-  }
-}
-
 // Filter out empty threads (if desired).
 if ($config->exclude_empty_threads) {
   $data = array_filter($data, function($d) {
     return $d->posts > 0;
   });
+}
+
+// Grab post data for threads with posts.
+if ($config->flatten) {
+  $result = [];
+
+  $count = 0;
+
+  foreach ($data as $thread) {
+    if ($thread->posts > 0) {
+      $count += $thread->posts;
+      foreach (getPostsForThread($thread->id, $config) as $comment) {
+
+        $comment->thread_id = $thread->id;
+        $comment->thread_link = $thread->link;
+        $comment->thread_identifiers = $thread->identifiers;
+        $comment->thread_slug = $thread->slug;
+        $comment->thread_clean_title = $thread->clean_title;
+        $comment->thread_is_deleted = $thread->isDeleted;
+        $comment->thread_is_closed = $thread->isClosed;
+
+        $result[] = $comment;
+      }
+    }
+  }
+
+  echo "$count\t ?=" . count($result);
+
+  $data = $result;
+}
+else {
+  foreach ($data as &$thread) {
+    if ($thread->posts > 0) {
+      $thread->post_data = getPostsForThread($thread->id, $config);
+    }
+  }
 }
 
 // Export data to desired format.
